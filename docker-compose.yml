@@ -1,0 +1,17 @@
+version: '3.3'
+
+services:
+  facebook_scraper_app:
+    container_name: facebook_scraper_app
+    image: facebook_scraper_app
+    ports:
+      - "8686:8686"
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: 1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: "host"
+    tty: true
+    stdin_open: true

@@ -67,7 +67,6 @@ async def download_and_convert_to_ogg(video_url, postgres):
         return False
 
 
-# Main async download function
 async def download_videos(urls, postgres):
     tasks = []
     for url in urls:

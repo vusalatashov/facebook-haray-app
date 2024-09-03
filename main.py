@@ -2,7 +2,7 @@ import os
 import asyncio
 
 from config.config import ROOT_DIR
-from driver.driver import create_driver
+from driver.driver import Driver
 from driver.login import login_to_facebook
 from extractor.extractor_info import extract_info
 from database.postgres_video import PostgresVideo
@@ -16,10 +16,11 @@ os.chdir(ROOT_DIR)
 
 class Main:
     def __init__(self):
-        self.driver_video = create_driver()
-        self.driver_reels = create_driver()
-        self.driver_video_info = create_driver()
-        self.driver_user_info = create_driver()
+        self.driver=Driver()
+        self.driver_video = self.driver.create_driver()
+        self.driver_reels = self.driver.create_driver()
+        self.driver_video_info = self.driver.create_driver()
+        self.driver_user_info = self.driver.create_driver()
         self.postgres = PostgresVideo()
 
     def login_to_driver(self):

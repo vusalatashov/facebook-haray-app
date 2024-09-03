@@ -80,13 +80,11 @@ class Base64:
             results = list(executor.map(self.convert_file_to_base64, mp3_paths))
         return results
 
-async def speech_to_text(postgres):
+async def speech_to_text(postgres,mp3_paths):
     domain = "192.168.1.161"
     transcribe = Transcribe()
     base64_converter = Base64()
-    mp3_paths = postgres.get_url_for_content()
     base64_audios = base64_converter.get_base64_conversions(mp3_paths)
     await transcribe.transcribe_multiple_audios(domain, base64_audios, postgres, mp3_paths)
 
-if __name__ == "__main__":
-    asyncio.run(speech_to_text(PostgresVideo()))
+
