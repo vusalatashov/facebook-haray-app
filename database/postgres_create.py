@@ -1,25 +1,23 @@
 import os
 from psycopg2 import connect, OperationalError
-from dotenv import load_dotenv
 
 class Postgres_Create:
     def __init__(self):
         try:
             connection_params = Postgres_Create.get_connection_params()
             self.conn = connect(**connection_params)
-            print("Verilənlər bazasına uğurla qoşuldu")
+            print("connected to the database")
         except OperationalError as e:
-            print(f"Bağlantı zamanı səhv baş verdi: {e}")
+            print(f"Database connection error: {e}")
 
     @staticmethod
     def get_connection_params() -> dict:
-        load_dotenv()  # .env faylının məzmununu yükləyir
         connection_params = {
-            'dbname': os.getenv("DB_NAME"),
-            'user': os.getenv("DB_USER"),
-            'password': os.getenv("DB_PASSWORD"),
-            'host': os.getenv("DB_HOST"),
-            'port': os.getenv("DB_PORT")
+            'dbname': 'postgres',
+            'user': 'postgres',
+            'password': 'postgres',
+            'host': 'localhost',
+            'port': '5430'
         }
         return connection_params
 
@@ -43,9 +41,9 @@ class Postgres_Create:
         try:
             curr.execute(create_query)
             self.conn.commit()
-            print("user_data cədvəli yaradıldı")
+            print("create user_data table")
         except Exception as e:
-            print(f"user_data cədvəli yaradılarkən səhv baş verdi: {e}")
+            print(f"Error creating user_data table: {e}")
         finally:
             curr.close()
 
@@ -69,13 +67,13 @@ class Postgres_Create:
         try:
             curr.execute(create_query)
             self.conn.commit()
-            print("video_data cədvəli yaradıldı")
+            print("create video_data table")
         except Exception as e:
-            print(f"video_data cədvəli yaradılarkən səhv baş verdi: {e}")
+            print(f"Error creating video_data table: {e}")
         finally:
             curr.close()
 
     def close_connection(self):
         if self.conn:
             self.conn.close()
-            print("Verilənlər bazası bağlantısı bağlandı")
+            print("Database connection closed.")

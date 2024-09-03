@@ -2,7 +2,7 @@ import undetected_chromedriver as uc
 
 def create_driver():
     options = uc.ChromeOptions()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-dev-shm-usage")

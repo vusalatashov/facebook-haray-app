@@ -4,27 +4,13 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from app.driver import create_driver
-from app.login import login_to_facebook
-from app.postgres_video import PostgresVideo
+
 
 
 def parse_count(count_str):
-    count_str = count_str.lower().replace(' rəy', '').replace(' comments', '').replace(' comments', '').replace(' ',
-                                                                                                                '').strip()
+    count_str = count_str.lower().replace(' rəy', '').replace(' comments', '').replace(' ', '').strip()
     match = re.match(r'([\d\.]+)([kmb]?)', count_str)
-    if not match:
-        return 0
-    number, suffix = match.groups()
-    number = float(number)
-    if suffix == 'k':
-        return int(number * 1_000)
-    elif suffix == 'm':
-        return int(number * 1_000_000)
-    elif suffix == 'b':
-        return int(number * 1_000_000_000)
-    else:
-        return int(number)
+    return int(float(match.group(1)) * {'k': 1_000, 'm': 1_000_000, 'b': 1_000_000_000}.get(match.group(2), 1)) if match else 0
 
 
 def extract_info_reels(url, driver_video_info1, driver_user_info1, postgres1):
@@ -82,11 +68,17 @@ def extract_info_video(url, driver_video_info1, driver_user_info1, postgres1):
         return None
 
 
-def extract_info(url, driver_video_info, driver_user_info, postgres):
-    video_info = extract_info_video(url, driver_video_info, driver_user_info, postgres)
-    if video_info is None or (video_info['Username'] == 'N/A' and video_info['Views'] == 0):
-        return extract_info_reels(url, driver_video_info, driver_user_info, postgres)
-    return video_info
+def extract_info(urls_table, driver_video_info, driver_user_info, postgres):
+    results = []
+    urls = [row[0] for row in urls_table]
+
+    for url in urls:
+        video_info = extract_info_video(url, driver_video_info, driver_user_info, postgres)
+        if video_info is None or (video_info['Username'] == 'N/A' and video_info['Views'] == 0):
+            video_info = extract_info_reels(url, driver_video_info, driver_user_info, postgres)
+        results.append(video_info)
+    return results
+
 
 
 def get_like_count_video(soup):
@@ -205,33 +197,9 @@ def extract_user_info(driver_user_info1, user_url):
     return follower_count, following_count
 
 def extract_integer(s):
-    # Remove non-numeric characters except for periods and abbreviations
-    cleaned = ''.join(c if c.isdigit() or c == '.' or c in 'KkM' else '' for c in s)
-
-    # Replace K and M with their numeric multipliers
-    if 'K' in cleaned or 'k' in cleaned:
-        cleaned = cleaned.replace('K', '').replace('k', '')
-        number = int(float(cleaned) * 1000)
-    elif 'M' in cleaned:
-        cleaned = cleaned.replace('M', '')
-        number = int(float(cleaned) * 1000000)
-    else:
-        # Remove periods and convert to integer
-        number = int(cleaned.replace('.', ''))
-
-    return number
+    cleaned = ''.join(c for c in s if c.isdigit() or c in '.KkM')
+    multiplier = 1000 if 'K' in cleaned or 'k' in cleaned else 1000000 if 'M' in cleaned else 1
+    return int(float(cleaned.replace('K', '').replace('k', '').replace('M', '').replace('.', '')) * multiplier)
 
 
 
-if __name__ == "__main__":
-    postgres2 = PostgresVideo()
-    driver_video_info2 = create_driver()
-    driver_user_info2 = create_driver()
-    driver_video_info2.get("https://www.facebook.com")
-    login_to_facebook(driver_video_info2)
-    driver_user_info2.get("https://www.facebook.com")
-    login_to_facebook(driver_user_info2)
-
-    extract_info("https://www.facebook.com/reel/1217413092753221", driver_video_info2, driver_user_info2, postgres2)
-    driver_user_info2.quit()
-    driver_video_info2.quit()

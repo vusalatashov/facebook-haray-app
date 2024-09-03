@@ -1,4 +1,4 @@
-from app.postgres_create import Postgres_Create
+from database.postgres_create import Postgres_Create
 
 
 class PostgresVideo:
@@ -130,5 +130,82 @@ class PostgresVideo:
         except Exception as e:
             print(f"Error occurred while deleting {video_url}: {e}")
             conn.rollback()
+        finally:
+            curr.close()
+
+    def get_post_url_for_download(self):
+        conn = self.db.conn
+        select_query = """
+        SELECT url
+        FROM public.post_data
+        WHERE is_downloaded = FALSE AND platform = 'facebook'
+        """
+        curr = conn.cursor()
+        try:
+            curr.execute(select_query)
+            results = curr.fetchall()
+            if results:
+                urls = [result[0] for result in results]
+                return urls
+            else:
+                return []
+        except Exception as e:
+            print(f"Error selecting video data: {e}")
+            return []
+        finally:
+            curr.close()
+
+    def update_download_status(self, url, file_path):
+        conn = self.db.conn
+        update_query = """
+        UPDATE public.post_data
+        SET is_downloaded = TRUE, mp3_path = %s
+        WHERE url = %s
+        """
+        curr = conn.cursor()
+        try:
+            curr.execute(update_query, (file_path, url))
+            conn.commit()
+
+        except Exception as e:
+            print(f"Error updating download status: {e}")
+        finally:
+            curr.close()
+
+    def update_conversion_status(self, mp3_path, content):
+        conn = self.db.conn
+        update_query = """
+            UPDATE public.post_data
+            SET is_converted = TRUE, content = %s
+            WHERE mp3_path = %s
+            """
+        curr = conn.cursor()
+        try:
+            curr.execute(update_query, (content, mp3_path))
+            conn.commit()
+        except Exception as e:
+            print(f"Error updating conversion status: {e}")
+        finally:
+            curr.close()
+
+    def get_url_for_content(self):
+        conn = self.db.conn
+        select_query = """
+            SELECT mp3_path
+            FROM public.post_data
+            WHERE is_downloaded = TRUE AND is_converted = FALSE AND platform = 'facebook'
+            """
+        curr = conn.cursor()
+        try:
+            curr.execute(select_query)
+            results = curr.fetchall()
+            if results:
+                urls = [result[0] for result in results]
+                return urls
+            else:
+                return []
+        except Exception as e:
+            print(f"Error selecting video data: {e}")
+            return []
         finally:
             curr.close()
