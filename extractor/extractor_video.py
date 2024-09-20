@@ -1,8 +1,10 @@
 import time
+import logging
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+
 from driver.login import login_to_facebook
 
 def extract_urls(driver_video, postgres, processed_urls):
@@ -20,7 +22,7 @@ def extract_urls(driver_video, postgres, processed_urls):
             if len(processed_urls) >= 10:
                 return
     except Exception as e:
-        print(f"Error during video URL extraction: {e}")
+        logging.error(f"Error during video URL extraction: {e}")
 
 def fetch_urls_video(driver_video, postgres):
     # login_to_facebook(driver_video)

@@ -1,4 +1,5 @@
 from database.postgres_create import Postgres_Create
+import logging
 
 
 class PostgresVideo:
@@ -16,9 +17,9 @@ class PostgresVideo:
         try:
             curr.execute(insert_query, (video_url, video_id))
             conn.commit()
-            print(f"{video_url} added")
+            logging.info(f"{video_url} added")
         except Exception as e:
-            print(f"Error occurred while adding {video_url}: {e}")
+            logging.error(f"Error occurred while adding {video_url}: {e}")
             conn.rollback()
         finally:
             curr.close()
@@ -36,10 +37,10 @@ class PostgresVideo:
         try:
             curr.execute(insert_query, (user_url, fullname, follower_count, following_count))
             conn.commit()
-            print(f"{user_url} added")
+            logging.info(f"{user_url} added")
             self.find_user_id(user_url, video_url)
         except Exception as e:
-            print(f"Error occurred while adding {user_url}: {e}")
+            logging.error(f"Error occurred while adding {user_url}: {e}")
         finally:
             curr.close()
 
@@ -57,9 +58,9 @@ class PostgresVideo:
         try:
             curr.execute(update_query, (description, like_count, comment_count, video_url))
             conn.commit()
-            print(f"{video_url} info updated")
+            logging.info(f"{video_url} info updated")
         except Exception as e:
-            print(f"Error occurred while updating {video_url} info: {e}")
+            logging.error(f"Error occurred while updating {video_url} info: {e}")
             conn.rollback()
         finally:
             curr.close()
@@ -77,7 +78,7 @@ class PostgresVideo:
             urls = curr.fetchall()
             return urls
         except Exception as e:
-            print(f"Error occurred while fetching URLs: {e}")
+            logging.error(f"Error occurred while fetching URLs: {e}")
         finally:
             curr.close()
 
@@ -92,9 +93,9 @@ class PostgresVideo:
         try:
             curr.execute(update_query, (user_id, video_url))
             conn.commit()
-            print(f"{video_url} user id updated")
+            logging.info(f"{video_url} user id updated")
         except Exception as e:
-            print(f"Error occurred while updating {video_url} user id: {e}")
+            logging.error(f"Error occurred while updating {video_url} user id: {e}")
             conn.rollback()
         finally:
             curr.close()
@@ -112,7 +113,7 @@ class PostgresVideo:
             user_id = curr.fetchone()
             self.update_video_user_data_id(video_url, user_id)
         except Exception as e:
-            print(f"Error occurred while fetching user ID: {e}")
+            logging.error(f"Error occurred while fetching user ID: {e}")
         finally:
             curr.close()
 
@@ -126,9 +127,9 @@ class PostgresVideo:
         try:
             curr.execute(delete_query, (video_url,))
             conn.commit()
-            print(f"{video_url} deleted")
+            logging.info(f"{video_url} deleted")
         except Exception as e:
-            print(f"Error occurred while deleting {video_url}: {e}")
+            logging.error(f"Error occurred while deleting {video_url}: {e}")
             conn.rollback()
         finally:
             curr.close()
@@ -150,7 +151,7 @@ class PostgresVideo:
             else:
                 return []
         except Exception as e:
-            print(f"Error selecting video data: {e}")
+            logging.error(f"Error selecting video data: {e}")
             return []
         finally:
             curr.close()
@@ -168,7 +169,7 @@ class PostgresVideo:
             conn.commit()
 
         except Exception as e:
-            print(f"Error updating download status: {e}")
+            logging.error(f"Error updating download status: {e}")
         finally:
             curr.close()
 
@@ -184,7 +185,7 @@ class PostgresVideo:
             curr.execute(update_query, (content, mp3_path))
             conn.commit()
         except Exception as e:
-            print(f"Error updating conversion status: {e}")
+            logging.error(f"Error updating conversion status: {e}")
         finally:
             curr.close()
 
@@ -205,7 +206,22 @@ class PostgresVideo:
             else:
                 return []
         except Exception as e:
-            print(f"Error selecting video data: {e}")
+            logging.error(f"Error selecting video data: {e}")
             return []
+        finally:
+            curr.close()
+
+
+    def delete_post(self, mp3_path):
+        conn = self.db.conn
+        delete_query = """
+        DELETE FROM public.post_data WHERE mp3_path = %s
+        """
+        curr = conn.cursor()
+        try:
+            curr.execute(delete_query, (mp3_path,))
+            conn.commit()
+        except Exception as e:
+            logging.error(f"Error deleting video data: {e}")
         finally:
             curr.close()

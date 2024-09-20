@@ -1,4 +1,5 @@
 import re
+import logging
 
 from bs4 import BeautifulSoup
 from selenium.webdriver.support.wait import WebDriverWait
@@ -6,11 +7,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 
-
 def parse_count(count_str):
     count_str = count_str.lower().replace(' rəy', '').replace(' comments', '').replace(' ', '').strip()
     match = re.match(r'([\d\.]+)([kmb]?)', count_str)
-    return int(float(match.group(1)) * {'k': 1_000, 'm': 1_000_000, 'b': 1_000_000_000}.get(match.group(2), 1)) if match else 0
+    return int(
+        float(match.group(1)) * {'k': 1_000, 'm': 1_000_000, 'b': 1_000_000_000}.get(match.group(2), 1)) if match else 0
 
 
 def extract_info_reels(url, driver_video_info1, driver_user_info1, postgres1):
@@ -22,7 +23,7 @@ def extract_info_reels(url, driver_video_info1, driver_user_info1, postgres1):
         user_url = get_user_url_reels(soup)
         description = get_description_reels(soup)
 
-        if user_url != 'N/A' and 'watch' not in user_url :
+        if user_url != 'N/A' and 'watch' not in user_url:
             postgres1.save_video_info(like_count, comment_count, description, url)
             if 'instagram' not in user_url:
                 follower, following = extract_user_info(driver_user_info1, user_url)
@@ -36,7 +37,7 @@ def extract_info_reels(url, driver_video_info1, driver_user_info1, postgres1):
             "Description": description,
         }
     except Exception as e:
-        print(f"Error extracting reels info")
+        logging.error(f"Error extracting reels info")
         return None
 
 
@@ -64,12 +65,13 @@ def extract_info_video(url, driver_video_info1, driver_user_info1, postgres1):
             }
 
     except Exception as e:
-        print(f"Error extracting video info")
+        logging.error(f"Error extracting video info")
         return None
 
 
-def extract_info(urls_table, driver_video_info, driver_user_info, postgres):
+async def extract_info(driver_video_info, driver_user_info, postgres):
     results = []
+    urls_table = postgres.find_urls()
     urls = [row[0] for row in urls_table]
 
     for url in urls:
@@ -78,7 +80,6 @@ def extract_info(urls_table, driver_video_info, driver_user_info, postgres):
             video_info = extract_info_reels(url, driver_video_info, driver_user_info, postgres)
         results.append(video_info)
     return results
-
 
 
 def get_like_count_video(soup):
@@ -106,7 +107,8 @@ def get_comment_count_video(soup):
     comment_count_elements = soup.find_all('span',
                                            class_='x193iq5w xeuugli x13faqbe x1vvkbs xlh3980 xvmahel x1n0sxbx x1lliihq x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x x4zkp8e x676frb x1nxh6w3 x1sibtaa xo1l8bm xi81zsa')
     comment_count = 0
-    if comment_count_elements and len(comment_count_elements) > 0 and ('rəy' or 'comments') in comment_count_elements[0].text.lower():
+    if comment_count_elements and len(comment_count_elements) > 0 and ('rəy' or 'comments') in comment_count_elements[
+        0].text.lower():
         comment_count = parse_count(comment_count_elements[0].text.lower())
     return comment_count
 
@@ -192,14 +194,12 @@ def extract_user_info(driver_user_info1, user_url):
     follower_count_str = user_info[0].get_text()
     following_count_str = user_info[1].get_text()
 
-    follower_count=parse_count(follower_count_str)
-    following_count=parse_count(following_count_str)
+    follower_count = parse_count(follower_count_str)
+    following_count = parse_count(following_count_str)
     return follower_count, following_count
+
 
 def extract_integer(s):
     cleaned = ''.join(c for c in s if c.isdigit() or c in '.KkM')
     multiplier = 1000 if 'K' in cleaned or 'k' in cleaned else 1000000 if 'M' in cleaned else 1
     return int(float(cleaned.replace('K', '').replace('k', '').replace('M', '').replace('.', '')) * multiplier)
-
-
-

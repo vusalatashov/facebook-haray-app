@@ -1,4 +1,5 @@
 import os
+import logging
 from psycopg2 import connect, OperationalError
 
 class Postgres_Create:
@@ -6,9 +7,9 @@ class Postgres_Create:
         try:
             connection_params = Postgres_Create.get_connection_params()
             self.conn = connect(**connection_params)
-            print("connected to the database")
+            logging.info("connected to the database")
         except OperationalError as e:
-            print(f"Database connection error: {e}")
+            logging.error(f"Database connection error: {e}")
 
     @staticmethod
     def get_connection_params() -> dict:
@@ -41,9 +42,9 @@ class Postgres_Create:
         try:
             curr.execute(create_query)
             self.conn.commit()
-            print("create user_data table")
+            logging.info("create user_data table")
         except Exception as e:
-            print(f"Error creating user_data table: {e}")
+            logging.error(f"Error creating user_data table: {e}")
         finally:
             curr.close()
 

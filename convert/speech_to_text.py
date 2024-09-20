@@ -6,7 +6,6 @@ import os
 import aiohttp
 from pydub import AudioSegment
 from config.config import ROOT_DIR
-from database.postgres_video import PostgresVideo
 
 os.chdir(ROOT_DIR)
 
@@ -80,7 +79,8 @@ class Base64:
             results = list(executor.map(self.convert_file_to_base64, mp3_paths))
         return results
 
-async def speech_to_text(postgres,mp3_paths):
+async def speech_to_text(postgres):
+    mp3_paths = postgres.get_url_for_content()
     domain = "192.168.1.161"
     transcribe = Transcribe()
     base64_converter = Base64()

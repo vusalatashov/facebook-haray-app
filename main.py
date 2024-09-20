@@ -7,53 +7,32 @@ from driver.login import login_to_facebook
 from extractor.extractor_info import extract_info
 from database.postgres_video import PostgresVideo
 from download.dowlnoad_video import download_videos
-from extractor.extractor_video import fetch_urls_video
 from extractor.extractor_reels import fetch_reels_urls
 from convert.speech_to_text import speech_to_text
+from download.speech_detection import main_detect
 
 os.chdir(ROOT_DIR)
 
 
-class Main:
-    def __init__(self):
-        self.driver=Driver()
-        self.driver_video = self.driver.create_driver()
-        self.driver_reels = self.driver.create_driver()
-        self.driver_video_info = self.driver.create_driver()
-        self.driver_user_info = self.driver.create_driver()
-        self.postgres = PostgresVideo()
+async def run():
+    driver = Driver()
+    while True:
+        driver_reels = driver.create_driver()
+        driver_video_info = driver.create_driver()
+        driver_user_info = driver.create_driver()
+        postgres = PostgresVideo()
+        login_to_facebook(driver_reels)
+        for i in range(0, 10):
+            await fetch_reels_urls(driver_reels, postgres)
+            await extract_info(driver_video_info, driver_user_info, postgres)
+            await download_videos(postgres)
+            await main_detect(postgres)
+            await speech_to_text(postgres)
+        driver_reels.quit()
+        driver_video_info.quit()
+        driver_user_info.quit()
 
-    def login_to_driver(self):
-        login_to_facebook(self.driver_video)
-        login_to_facebook(self.driver_reels)
-
-    async def extract_video_urls(self):
-        fetch_urls_video(self.driver_video, self.postgres)
-
-    async def extract_reels_urls(self):
-        fetch_reels_urls(self.driver_reels, self.postgres)
-
-    async def extract_video_info_and_user_url(self):
-        urls = self.postgres.find_urls()
-        extract_info(urls, self.driver_video_info, self.driver_user_info, self.postgres)
-
-    async def download_videos(self):
-        urls = self.postgres.get_post_url_for_download()
-        await download_videos(urls, self.postgres)
-
-    async def speech_to_text(self):
-        mp3_paths = self.postgres.get_url_for_content()
-        await speech_to_text(self.postgres, mp3_paths)
-
-    def run(self):
-        self.login_to_driver()
-        while True:
-            # asyncio.run(self.extract_video_urls())
-            asyncio.run(self.extract_reels_urls())
-            asyncio.run(self.extract_video_info_and_user_url())
-            asyncio.run(self.download_videos())
-            asyncio.run(self.speech_to_text())
 
 
 if __name__ == "__main__":
-    Main().run()
+    asyncio.run(run())

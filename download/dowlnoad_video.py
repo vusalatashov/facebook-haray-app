@@ -5,6 +5,7 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 async def download_and_convert_to_ogg(video_url, postgres):
     output_dir = 'resources/video_resources/'
 
@@ -67,8 +68,9 @@ async def download_and_convert_to_ogg(video_url, postgres):
         return False
 
 
-async def download_videos(urls, postgres):
+async def download_videos(postgres):
     tasks = []
+    urls = postgres.get_post_url_for_download()
     for url in urls:
         task = asyncio.create_task(download_and_convert_to_ogg(url, postgres))
         tasks.append(task)

@@ -12,7 +12,4 @@ def get_html(url):
         soup = BeautifulSoup(response.text, 'html.parser')
         return soup.prettify()
 
-if __name__ == "__main__":
-    url = "https://www.facebook.com/watch?v=1559651637988234"
-    html = get_html(url)
-    print(html)
+
